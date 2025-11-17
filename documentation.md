@@ -139,6 +139,12 @@
 - **Expected**: Text should be clearly visible against the background
 - **Actual**: Text is white on white background
 
+> Dark mode is "enabled" by changing foreground and background color variables in globals.css but these values are not being used anywhere.
+
+> Solution: Remove unused dark mode variables. Which prevents the text color from changing to unpredictable values.
+
+> Future prevention: This solution should prevent this problem moving forward.
+
 **Ticket VAL-203: State Code Validation**
 
 - **Reporter**: Alex Thompson
