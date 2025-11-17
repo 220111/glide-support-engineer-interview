@@ -83,6 +83,13 @@
 - **Description**: "I was able to submit a funding request for $0.00"
 - **Impact**: Creates unnecessary transaction records
 
+> FundingModal had amount input validation minimum set too low (0.0 vs 0.1). 
+These requests were rejected on the backend because the amount input was set to positive but this provided a not user friendly error message.
+
+> Solution: Set amount input minimum to 0.1 instead of 0.0
+
+> In the future it should be noted that min is inclusive.
+
 **Ticket VAL-207: Routing Number Optional**
 
 - **Reporter**: Support Team
