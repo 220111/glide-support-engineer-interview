@@ -14,7 +14,7 @@ type FundingFormData = {
   amount: string;
   fundingType: "card" | "bank";
   accountNumber: string;
-  routingNumber?: string;
+  routingNumber: string;
 };
 
 export function FundingModal({ accountId, onClose, onSuccess }: FundingModalProps) {

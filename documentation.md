@@ -90,6 +90,12 @@
 - **Description**: "Bank transfers are being submitted without routing numbers"
 - **Impact**: Failed ACH transfers
 
+> routingNumber is optional in fundAccount endpoint input and FundingFormData type
+
+> Solution: make routingNumber not optional
+
+> In the future required fields should not be marked as optional
+
 **Ticket VAL-210: Card Type Detection**
 
 - **Reporter**: Support Team
