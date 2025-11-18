@@ -156,20 +156,19 @@ export const accountRouter = router({
       }
 
       const accountTransactions = await db
-        .select()
+        .select({
+          id: transactions.id,
+          type: transactions.type,
+          amount: transactions.amount,
+          description: transactions.description,
+          status: transactions.status,
+          createdAt: transactions.createdAt,
+          accountType: accounts.accountType,
+        })
         .from(transactions)
+        .leftJoin(accounts, eq(transactions.accountId, accounts.id))
         .where(eq(transactions.accountId, input.accountId));
 
-      const enrichedTransactions = [];
-      for (const transaction of accountTransactions) {
-        const accountDetails = await db.select().from(accounts).where(eq(accounts.id, transaction.accountId)).get();
-
-        enrichedTransactions.push({
-          ...transaction,
-          accountType: accountDetails?.accountType,
-        });
-      }
-
-      return enrichedTransactions;
+      return accountTransactions;
     }),
 });

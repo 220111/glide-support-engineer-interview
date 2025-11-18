@@ -63,6 +63,12 @@
 - **Description**: "Not all transactions appear in history after multiple funding events"
 - **Impact**: Users cannot verify all their transactions
 
+> getTransactions endpoint has ineffecient db calls in a loop that was effectively replicating a left join and fundAccount was returning the incorrect transaction which was resolved with Ticket PERF-406
+
+> Solution: replace "enrichedTranscations" with a left join to move complexity into a single db call.
+
+> Databases are built to handle more complicated queries with default functionality this is especially true with joins which are would require a linear operation.
+
 **Ticket PERF-406: Balance Calculation**
 
 - **Reporter**: Finance Team
