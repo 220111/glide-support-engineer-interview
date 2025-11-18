@@ -269,6 +269,12 @@ These requests were rejected on the backend because the amount input was set to 
 - **Description**: "International phone numbers aren't properly validated. The system accepts any string of numbers."
 - **Impact**: Unable to contact customers for important notifications
 
+> Only basic regex validation is being done on phone number
+
+> Solution: Include libphonenumber-js to verify phone numbers are real US numbers.
+
+> Extra information needed: This ticket seems like it might be asking to use an international phone number but it requires a US address. Desired functionality should be verified here before allowing international numbers. 
+
 **Ticket VAL-209: Amount Input Issues**
 
 - **Reporter**: Robert Lee

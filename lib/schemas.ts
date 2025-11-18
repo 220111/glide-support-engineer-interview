@@ -1,4 +1,5 @@
 import { z } from "zod";
+import parsePhoneNumber from "libphonenumber-js";
 
 const VALID_US_STATES = [
   "AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "FL", "GA",
@@ -23,6 +24,18 @@ const emailValidation = z
     return true;
   }, "Invalid email format");
 
+const phoneNumberValidation = z.string().transform((value, ctx) => {
+  const phoneNumber = parsePhoneNumber(value, "US"); // Default to US for numbers without a country code
+  if (!phoneNumber || !phoneNumber.isValid()) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Invalid phone number",
+    });
+    return z.NEVER;
+  }
+  return phoneNumber.format("E.164");
+});
+
 export const signupSchema = z
   .object({
     email: emailValidation,
@@ -36,7 +49,7 @@ export const signupSchema = z
     confirmPassword: z.string(),
     firstName: z.string().min(1, { message: 'First Name is required' }),
     lastName: z.string().min(1, { message: 'Last Name is required' }),
-    phoneNumber: z.string().regex(/^\+?\d{10,15}$/, { message: 'Must be valid phone number' }),
+    phoneNumber: phoneNumberValidation,
     dateOfBirth: z.coerce
       .date()
       .max(new Date(), { message: "Date of birth must be in the past" })
