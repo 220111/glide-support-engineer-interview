@@ -215,6 +215,10 @@ These requests were rejected on the backend because the amount input was set to 
 - **Description**: "System accepts amounts with multiple leading zeros"
 - **Impact**: Confusion in transaction records
 
+> Minor problem with amount field validation that allows for leading zeros. Gets parsed out for the backend but easy fix.
+
+> Solution: Update amount input validation to not allow for leading zeros.
+
 **Ticket PERF-402: Logout Issues**
 
 - **Reporter**: QA Team
