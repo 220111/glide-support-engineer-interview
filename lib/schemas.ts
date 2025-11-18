@@ -1,5 +1,13 @@
 import { z } from "zod";
 
+const VALID_US_STATES = [
+  "AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "FL", "GA",
+  "HI", "ID", "IL", "IN", "IA", "KS", "KY", "LA", "ME", "MD",
+  "MA", "MI", "MN", "MS", "MO", "MT", "NE", "NV", "NH", "NJ",
+  "NM", "NY", "NC", "ND", "OH", "OK", "OR", "PA", "RI", "SC",
+  "SD", "TN", "TX", "UT", "VT", "VA", "WA", "WV", "WI", "WY"
+] as const; // `as const` makes it a tuple of literal strings
+
 const emailValidation = z
   .string()
   .email()
@@ -43,7 +51,7 @@ export const signupSchema = z
     ssn: z.string().regex(/^\d{9}$/, { message: 'Must be valid 9 digit SSN' }),
     address: z.string().min(1, { message: 'Address is required' }),
     city: z.string().min(1, { message: 'City is required' }),
-    state: z.string().length(2).toUpperCase(),
+    state: z.enum(VALID_US_STATES, { errorMap: () => ({ message: 'Must be a valid US state' }) }),
     zipCode: z.string().regex(/^\d{5}$/, { message: 'Must be valid 5 digit zip code' }),
   })
   .refine((data) => data.password === data.confirmPassword, {

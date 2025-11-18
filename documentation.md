@@ -258,6 +258,10 @@ These requests were rejected on the backend because the amount input was set to 
 - **Description**: "The system accepted 'XX' as a valid state code."
 - **Impact**: Address verification issues for banking communications
 
+> No validation on the state field
+
+> Solution: Update validation to match an enum of all state codes
+
 **Ticket VAL-204: Phone Number Format**
 
 - **Reporter**: John Smith
