@@ -3,7 +3,7 @@ import { TRPCError } from "@trpc/server";
 import { protectedProcedure, router } from "../trpc";
 import { db } from "@/lib/db";
 import { accounts, transactions } from "@/lib/db/schema";
-import { eq, and } from "drizzle-orm";
+import { eq, and, desc } from "drizzle-orm";
 
 function generateAccountNumber(): string {
   return Math.floor(Math.random() * 1000000000)
@@ -174,6 +174,7 @@ export const accountRouter = router({
         })
         .from(transactions)
         .leftJoin(accounts, eq(transactions.accountId, accounts.id))
+        .orderBy(desc(transactions.createdAt))
         .where(eq(transactions.accountId, input.accountId));
 
       return accountTransactions;

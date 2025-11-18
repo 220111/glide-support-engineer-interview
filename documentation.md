@@ -228,3 +228,9 @@ These requests were rejected on the backend because the amount input was set to 
 - **Priority**: Medium
 - **Description**: "Transaction order seems random sometimes"
 - **Impact**: Confusion when reviewing transaction history
+
+> Transactions were being returned without a set order
+
+> Solution: Add an orderBy to the transaction query
+
+> Ordered data should include an orderBy statement
