@@ -37,6 +37,12 @@
 - **Description**: "Unescaped HTML rendering in transaction descriptions"
 - **Impact**: Potential for cross-site scripting attacks
 
+> TransactionList component was using a span with the dangerouslySetInnerHTML prop to render the description
+
+> Solution: Replace with an embeded JSX string
+
+> Since the description of the transaction is a plain string there is no need for Unescaped HTML rendering.
+
 **Ticket PERF-401: Account Creation Error**
 
 - **Reporter**: Support Team
