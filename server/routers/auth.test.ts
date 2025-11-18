@@ -349,6 +349,39 @@ describe('authRouter', () => {
         
             await expect(caller.signup(input)).rejects.toThrow(TRPCError);
         });
+
+        it('should convert email to lowercase', async () => {
+            const caller = authRouter.createCaller({
+                req: new Request("http://localhost"),
+                res: new Headers(),
+                user: null,
+            });
+
+            const input = {
+                email: 'TEST@EXAMPLE.COM',
+                password: 'Password123!',
+                confirmPassword: 'Password123!',
+                firstName: 'Test',
+                lastName: 'User',
+                phoneNumber: '+12133734253',
+                dateOfBirth: new Date('2000-01-01'),
+                ssn: '123456789',
+                address: '123 Main St',
+                city: 'Anytown',
+                state: 'CA' as const,
+                zipCode: '12345',
+            };
+
+            (db.select().from().where().get as jest.Mock).mockResolvedValue(null);
+            (hash as jest.Mock).mockResolvedValue('hashedpassword');
+            (encrypt as jest.Mock).mockReturnValue('encryptedssn');
+            (db.insert().values().returning as jest.Mock).mockResolvedValue([{ ...input, id: 1, password: 'hashedpassword', email: 'test@example.com' }]);
+            (sign as jest.Mock).mockReturnValue('testtoken');
+
+            const result = await caller.signup(input);
+
+            expect(result.user.email).toBe('test@example.com');
+        });
     });
 
     describe('login', () => {
