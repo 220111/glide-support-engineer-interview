@@ -89,6 +89,12 @@
 - **Description**: "Database connections remain open"
 - **Impact**: System resource exhaustion
 
+> initDb function was creating new connections that it wasn't using and then never closing them
+
+> Solution: Remove unnecessary db connections and verify the ones that exist are closed properly
+
+> Db connections need to be closed when they're done being used. Drizzle should handle this with its connection but not others.
+
 ## High
 
 **Ticket VAL-201: Email Validation Problems**
