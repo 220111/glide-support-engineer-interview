@@ -7,40 +7,11 @@ import { publicProcedure, router } from "../trpc";
 import { db } from "@/lib/db";
 import { users, sessions } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
+import { loginSchema, signupSchema } from "@/lib/schemas";
 
 export const authRouter = router({
   signup: publicProcedure
-    .input(
-      z.object({
-        email: z.string().email().toLowerCase(),
-        password: z
-          .string()
-          .min(8, { message: "Password must be at least 8 characters long" })
-          .regex(/[A-Z]/, { message: "Password must contain at least one uppercase letter" })
-          .regex(/[a-z]/, { message: "Password must contain at least one lowercase letter" })
-          .regex(/[0-9]/, { message: "Password must contain at least one number" })
-          .regex(/[^a-zA-Z0-9]/, { message: "Password must contain at least one special character" }),
-        firstName: z.string().min(1),
-        lastName: z.string().min(1),
-        phoneNumber: z.string().regex(/^\+?\d{10,15}$/),
-        dateOfBirth: z.coerce
-          .date()
-          .max(new Date(), { message: "Date of birth must be in the past" })
-          .refine(
-            (date) => {
-              const today = new Date();
-              const eighteenYearsAgo = new Date(today.getFullYear() - 18, today.getMonth(), today.getDate());
-              return date <= eighteenYearsAgo;
-            },
-            { message: "You must be at least 18 years old to sign up" }
-          ),
-        ssn: z.string().regex(/^\d{9}$/),
-        address: z.string().min(1),
-        city: z.string().min(1),
-        state: z.string().length(2).toUpperCase(),
-        zipCode: z.string().regex(/^\d{5}$/),
-      })
-    )
+    .input(signupSchema)
     .mutation(async ({ input, ctx }) => {
       const existingUser = await db.select().from(users).where(eq(users.email, input.email)).get();
 
@@ -54,8 +25,11 @@ export const authRouter = router({
       const hashedPassword = await bcrypt.hash(input.password, 10);
       const encryptedSsn = encrypt(input.ssn);
 
+      const { confirmPassword, ...rest } = input;
+
       const [user] = await db.insert(users).values({
-        ...input,
+        ...rest,
+        dateOfBirth: input.dateOfBirth.toISOString(),
         password: hashedPassword,
         ssn: encryptedSsn,
       }).returning();
@@ -92,12 +66,7 @@ export const authRouter = router({
     }),
 
   login: publicProcedure
-    .input(
-      z.object({
-        email: z.string().email(),
-        password: z.string(),
-      })
-    )
+    .input(loginSchema)
     .mutation(async ({ input, ctx }) => {
       const user = await db.select().from(users).where(eq(users.email, input.email)).get();
 

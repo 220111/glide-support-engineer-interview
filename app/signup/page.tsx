@@ -3,23 +3,13 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { trpc } from "@/lib/trpc/client";
 import Link from "next/link";
+import { signupSchema } from "@/lib/schemas";
+import { z } from "zod";
 
-type SignupFormData = {
-  email: string;
-  password: string;
-  confirmPassword: string;
-  firstName: string;
-  lastName: string;
-  phoneNumber: string;
-  dateOfBirth: string;
-  ssn: string;
-  address: string;
-  city: string;
-  state: string;
-  zipCode: string;
-};
+type SignupFormData = z.infer<typeof signupSchema>;
 
 export default function SignupPage() {
   const router = useRouter();
@@ -30,12 +20,11 @@ export default function SignupPage() {
     register,
     handleSubmit,
     formState: { errors },
-    watch,
     trigger,
-  } = useForm<SignupFormData>();
+  } = useForm<SignupFormData>({
+    resolver: zodResolver(signupSchema),
+  });
   const signupMutation = trpc.auth.signup.useMutation();
-
-  const password = watch("password");
 
   const nextStep = async () => {
     let fieldsToValidate: (keyof SignupFormData)[] = [];
@@ -80,13 +69,7 @@ export default function SignupPage() {
                   Email
                 </label>
                 <input
-                  {...register("email", {
-                    required: "Email is required",
-                    pattern: {
-                      value: /^\S+@\S+$/i,
-                      message: "Invalid email address",
-                    },
-                  })}
+                  {...register("email")}
                   type="email"
                   className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
                 />
@@ -98,20 +81,7 @@ export default function SignupPage() {
                   Password
                 </label>
                 <input
-                  {...register("password", {
-                    required: "Password is required",
-                    minLength: {
-                      value: 8,
-                      message: "Password must be at least 8 characters",
-                    },
-                    validate: {
-                      hasNumber: (value) => /\d/.test(value) || "Password must contain a number",
-                      hasUpperCase: (value) => /[A-Z]/.test(value) || "Password must contain an uppercase letter",
-                      hasLowerCase: (value) => /[a-z]/.test(value) || "Password must contain a lowercase letter",
-                      hasSpecialChar: (value) =>
-                        /[^a-zA-Z0-9]/.test(value) || "Password must contain a special character",
-                    },
-                  })}
+                  {...register("password")}
                   type="password"
                   className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
                 />
@@ -123,10 +93,7 @@ export default function SignupPage() {
                   Confirm Password
                 </label>
                 <input
-                  {...register("confirmPassword", {
-                    required: "Please confirm your password",
-                    validate: (value) => value === password || "Passwords do not match",
-                  })}
+                  {...register("confirmPassword")}
                   type="password"
                   className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
                 />
@@ -145,7 +112,7 @@ export default function SignupPage() {
                     First Name
                   </label>
                   <input
-                    {...register("firstName", { required: "First name is required" })}
+                    {...register("firstName")}
                     type="text"
                     className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
                   />
@@ -157,7 +124,7 @@ export default function SignupPage() {
                     Last Name
                   </label>
                   <input
-                    {...register("lastName", { required: "Last name is required" })}
+                    {...register("lastName")}
                     type="text"
                     className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
                   />
@@ -170,13 +137,7 @@ export default function SignupPage() {
                   Phone Number
                 </label>
                 <input
-                  {...register("phoneNumber", {
-                    required: "Phone number is required",
-                    pattern: {
-                      value: /^\d{10}$/,
-                      message: "Phone number must be 10 digits",
-                    },
-                  })}
+                  {...register("phoneNumber")}
                   type="tel"
                   placeholder="1234567890"
                   className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
@@ -189,22 +150,7 @@ export default function SignupPage() {
                   Date of Birth
                 </label>
                 <input
-                  {...register("dateOfBirth", {
-                    required: "Date of birth is required",
-                    validate: {
-                      pastDate: (value) => new Date(value) < new Date() || "Date of birth must be in the past",
-                      isAdult: (value) => {
-                        const today = new Date();
-                        const birthDate = new Date(value);
-                        const age = today.getFullYear() - birthDate.getFullYear();
-                        const m = today.getMonth() - birthDate.getMonth();
-                        if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
-                          return age - 1 >= 18 || "You must be at least 18 years old";
-                        }
-                        return age >= 18 || "You must be at least 18 years old";
-                      },
-                    },
-                  })}
+                  {...register("dateOfBirth")}
                   type="date"
                   className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
                 />
@@ -220,13 +166,7 @@ export default function SignupPage() {
                   Social Security Number
                 </label>
                 <input
-                  {...register("ssn", {
-                    required: "SSN is required",
-                    pattern: {
-                      value: /^\d{9}$/,
-                      message: "SSN must be 9 digits",
-                    },
-                  })}
+                  {...register("ssn")}
                   type="text"
                   placeholder="123456789"
                   className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
@@ -239,7 +179,7 @@ export default function SignupPage() {
                   Street Address
                 </label>
                 <input
-                  {...register("address", { required: "Address is required" })}
+                  {...register("address")}
                   type="text"
                   className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
                 />
@@ -252,7 +192,7 @@ export default function SignupPage() {
                     City
                   </label>
                   <input
-                    {...register("city", { required: "City is required" })}
+                    {...register("city")}
                     type="text"
                     className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
                   />
@@ -264,13 +204,7 @@ export default function SignupPage() {
                     State
                   </label>
                   <input
-                    {...register("state", {
-                      required: "State is required",
-                      pattern: {
-                        value: /^[A-Z]{2}$/,
-                        message: "Use 2-letter state code",
-                      },
-                    })}
+                    {...register("state")}
                     type="text"
                     placeholder="CA"
                     className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
@@ -283,13 +217,7 @@ export default function SignupPage() {
                     ZIP Code
                   </label>
                   <input
-                    {...register("zipCode", {
-                      required: "ZIP code is required",
-                      pattern: {
-                        value: /^\d{5}$/,
-                        message: "ZIP code must be 5 digits",
-                      },
-                    })}
+                    {...register("zipCode")}
                     type="text"
                     placeholder="12345"
                     className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"

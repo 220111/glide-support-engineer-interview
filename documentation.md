@@ -130,6 +130,12 @@
   - Accepts "TEST@example.com" but converts to lowercase without notifying user
   - No validation for common typos like ".con" instead of ".com"
 
+> No email validation was being done at all on the frontend or backend.
+
+> Solution: Add email validation using zod to the frontend and backend.
+
+> Additionally I have refactored the frontend and backend validation using the react-hook-form zodResolver and a shared schema.
+
 **Ticket VAL-205: Zero Amount Funding**
 
 - **Reporter**: Lisa Johnson
