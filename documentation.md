@@ -161,6 +161,10 @@ These requests were rejected on the backend because the amount input was set to 
 - **Description**: "Account numbers generated using Math.random()"
 - **Impact**: Potentially predictable account numbers
 
+> Math.random() is not cryptographically secure and should not be used for sensitive information.
+
+> Replace Math.random() with node:crypto randomInt()
+
 **Ticket SEC-304: Session Management**
 
 - **Reporter**: DevOps Team

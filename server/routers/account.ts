@@ -4,11 +4,11 @@ import { protectedProcedure, router } from "../trpc";
 import { db } from "@/lib/db";
 import { accounts, transactions } from "@/lib/db/schema";
 import { eq, and, desc } from "drizzle-orm";
+import crypto from "crypto";
 
 function generateAccountNumber(): string {
-  return Math.floor(Math.random() * 1000000000)
-    .toString()
-    .padStart(10, "0");
+  const randomNumber = crypto.randomInt(1000000000);
+  return randomNumber.toString().padStart(10, "0");
 }
 
 export const accountRouter = router({
@@ -39,6 +39,7 @@ export const accountRouter = router({
       // Generate unique account number
       while (!isUnique) {
         accountNumber = generateAccountNumber();
+        console.log(accountNumber);
         const existing = await db.select().from(accounts).where(eq(accounts.accountNumber, accountNumber)).get();
         isUnique = !existing;
       }
