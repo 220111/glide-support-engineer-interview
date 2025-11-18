@@ -30,6 +30,14 @@
 - **Description**: "SSNs are stored in plaintext in the database"
 - **Impact**: Severe privacy and compliance risk
 
+> SSN is very sensitive data that should not be stored in plaintext. I am sure that this is not enough of a solution in the real world but it should be better in the case that somebody stole information out of the db.
+
+> Solution: Add salt and encrypt/decrypt functionality and encrypt the SSN before storing it in the db.
+
+> If you only needed to check that somebody was using the same SSN (as a security measure) then a one way hash could be better.
+
+> NOTE: I put an encryption key in the code just for interview purposes. In the real world this would not be done and would use just the environment variable. 
+
 **Ticket SEC-303: XSS Vulnerability**
 
 - **Reporter**: Security Audit

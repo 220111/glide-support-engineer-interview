@@ -1,3 +1,4 @@
+import { encrypt } from "@/lib/crypto";
 import { z } from "zod";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
@@ -35,14 +36,13 @@ export const authRouter = router({
       }
 
       const hashedPassword = await bcrypt.hash(input.password, 10);
+      const encryptedSsn = encrypt(input.ssn);
 
-      await db.insert(users).values({
+      const [user] = await db.insert(users).values({
         ...input,
         password: hashedPassword,
-      });
-
-      // Fetch the created user
-      const user = await db.select().from(users).where(eq(users.email, input.email)).get();
+        ssn: encryptedSsn,
+      }).returning();
 
       if (!user) {
         throw new TRPCError({
