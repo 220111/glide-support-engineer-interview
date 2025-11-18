@@ -35,6 +35,10 @@
 - **Description**: "Password validation only checks length, not complexity"
 - **Impact**: Account security risks
 
+> Backend password validation only checked length and frontend only checked for length + 1 number + not in one of 3 common passwords.
+
+> Solution: Add more conditions onto passwords including: 1 number + 1 special charater + 1 uppercase letter. Additionally these requirements were added to the backend.
+
 **Ticket SEC-301: SSN Storage**
 
 - **Reporter**: Security Audit Team
