@@ -1,4 +1,4 @@
-import { sqliteTable, text, integer, real } from "drizzle-orm/sqlite-core";
+import { sqliteTable, text, integer, real, index } from "drizzle-orm/sqlite-core";
 import { sql } from "drizzle-orm";
 
 export const users = sqliteTable("users", {
@@ -29,18 +29,25 @@ export const accounts = sqliteTable("accounts", {
   createdAt: text("created_at").default(sql`CURRENT_TIMESTAMP`),
 });
 
-export const transactions = sqliteTable("transactions", {
-  id: integer("id").primaryKey({ autoIncrement: true }),
-  accountId: integer("account_id")
-    .references(() => accounts.id)
-    .notNull(),
-  type: text("type").notNull(), // deposit, withdrawal
-  amount: real("amount").notNull(),
-  description: text("description"),
-  status: text("status").default("pending").notNull(),
-  createdAt: text("created_at").default(sql`CURRENT_TIMESTAMP`),
-  processedAt: text("processed_at"),
-});
+export const transactions = sqliteTable(
+  "transactions",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    accountId: integer("account_id")
+      .references(() => accounts.id)
+      .notNull(),
+    type: text("type").notNull(), // deposit, withdrawal
+    amount: real("amount").notNull(),
+    description: text("description"),
+    status: text("status").default("pending").notNull(),
+    createdAt: text("created_at").default(sql`CURRENT_TIMESTAMP`),
+    processedAt: text("processed_at"),
+  },
+  (transactions) => ({
+    accountIdIdx: index("account_id_idx").on(transactions.accountId),
+    createdAtIdx: index("created_at_idx").on(transactions.createdAt),
+  })
+);
 
 export const sessions = sqliteTable("sessions", {
   id: integer("id").primaryKey({ autoIncrement: true }),

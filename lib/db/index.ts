@@ -54,6 +54,9 @@ export function initDb() {
       expires_at TEXT NOT NULL,
       created_at TEXT DEFAULT CURRENT_TIMESTAMP
     );
+
+    CREATE INDEX IF NOT EXISTS account_id_idx ON transactions (account_id);
+    CREATE INDEX IF NOT EXISTS created_at_idx ON transactions (created_at);
   `);
 }
 

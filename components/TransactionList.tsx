@@ -1,13 +1,38 @@
 "use client";
 
 import { trpc } from "@/lib/trpc/client";
+import { useState, useEffect } from "react";
+
+interface Transaction {
+  id: number;
+  type: string;
+  amount: number;
+  description: string | null;
+  status: string;
+  createdAt: string | null;
+  accountType: string | null;
+}
 
 interface TransactionListProps {
   accountId: number;
 }
 
 export function TransactionList({ accountId }: TransactionListProps) {
-  const { data: transactions, isLoading } = trpc.account.getTransactions.useQuery({ accountId });
+  const [allTransactions, setAllTransactions] = useState<Transaction[]>([]);
+  const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } =
+    trpc.account.getTransactions.useInfiniteQuery(
+      { accountId, limit: 10 },
+      {
+        getNextPageParam: (lastPage) => lastPage.nextCursor,
+        initialCursor: 0,
+      }
+    );
+
+  useEffect(() => {
+    if (data) {
+      setAllTransactions(data.pages.flatMap((page) => page.items));
+    }
+  }, [data]);
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("en-US", {
@@ -26,7 +51,7 @@ export function TransactionList({ accountId }: TransactionListProps) {
     });
   };
 
-  if (isLoading) {
+  if (isLoading && allTransactions.length === 0) {
     return (
       <div className="bg-white shadow rounded-lg p-6">
         <p className="text-gray-500">Loading transactions...</p>
@@ -34,7 +59,7 @@ export function TransactionList({ accountId }: TransactionListProps) {
     );
   }
 
-  if (!transactions || transactions.length === 0) {
+  if (!allTransactions || allTransactions.length === 0) {
     return (
       <div className="bg-white shadow rounded-lg p-6">
         <p className="text-gray-500">No transactions yet.</p>
@@ -57,7 +82,7 @@ export function TransactionList({ accountId }: TransactionListProps) {
           </tr>
         </thead>
         <tbody className="bg-white divide-y divide-gray-200">
-          {transactions.map((transaction) => (
+          {allTransactions.map((transaction: Transaction) => (
             <tr key={transaction.id}>
               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                 {formatDate(transaction.createdAt!)}
@@ -89,6 +114,17 @@ export function TransactionList({ accountId }: TransactionListProps) {
           ))}
         </tbody>
       </table>
+      {hasNextPage && (
+        <div className="px-6 py-4 bg-white">
+          <button
+            onClick={() => fetchNextPage()}
+            disabled={!hasNextPage || isFetchingNextPage}
+            className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+          >
+            {isFetchingNextPage ? "Loading more..." : "Load More"}
+          </button>
+        </div>
+      )}
     </div>
   );
 }

@@ -223,6 +223,14 @@ These requests were rejected on the backend because the amount input was set to 
 - **Description**: "System slows down when processing multiple transactions"
 - **Impact**: Poor user experience during peak usage
 
+> Viewing transactions loads all transactions for the account each time. Additionally these are always filtered on the account number and ordered by the creation date.
+
+> Solution 1: Add a database index on account number and creation date to increase retreaval times.
+
+> Solution 2: Paginate the transactions using a useInfinteQuery hook with a "load more" button do reduce retreaval of older transactions.
+
+> It's important to ensure that we're not loading more data than needed and to ensure that the database is setup for how it's being used most frequently.
+
 ## Medium
 
 **Ticket UI-101: Dark Mode Text Visibility**

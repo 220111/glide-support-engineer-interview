@@ -165,6 +165,8 @@ export const accountRouter = router({
     .input(
       z.object({
         accountId: z.number(),
+        limit: z.number().min(1).max(100).default(10),
+        cursor: z.number().min(0).default(0),
       })
     )
     .query(async ({ input, ctx }) => {
@@ -195,8 +197,19 @@ export const accountRouter = router({
         .from(transactions)
         .leftJoin(accounts, eq(transactions.accountId, accounts.id))
         .orderBy(desc(transactions.createdAt))
-        .where(eq(transactions.accountId, input.accountId));
+        .where(eq(transactions.accountId, input.accountId))
+        .limit(input.limit + 1) // Fetch one more to check if there's a next page
+        .offset(input.cursor);
 
-      return accountTransactions;
+      let nextCursor: typeof input.cursor | undefined = undefined;
+      if (accountTransactions.length > input.limit) {
+        accountTransactions.pop(); // Remove the extra item
+        nextCursor = input.cursor + input.limit;
+      }
+
+      return {
+        items: accountTransactions,
+        nextCursor,
+      };
     }),
 });
