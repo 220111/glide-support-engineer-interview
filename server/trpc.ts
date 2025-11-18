@@ -54,12 +54,9 @@ export async function createContext(opts: CreateNextContextOptions | FetchCreate
 
       const session = await db.select().from(sessions).where(eq(sessions.token, token)).get();
 
-      if (session && new Date(session.expiresAt) > new Date()) {
+      const gracePeriod = 60 * 1000; // 60 seconds is too close to expire time
+      if (session && new Date(session.expiresAt).getTime() - gracePeriod > new Date().getTime()) {
         user = await db.select().from(users).where(eq(users.id, decoded.userId)).get();
-        const expiresIn = new Date(session.expiresAt).getTime() - new Date().getTime();
-        if (expiresIn < 60000) {
-          console.warn("Session about to expire");
-        }
       }
     } catch (error) {
       // Invalid token

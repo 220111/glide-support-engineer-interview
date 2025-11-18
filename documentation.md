@@ -185,6 +185,11 @@ These requests were rejected on the backend because the amount input was set to 
 - **Description**: "Expiring sessions still considered valid until exact expiry time"
 - **Impact**: Security risk near session expiration
 
+> No system grace period so it will not invalidate sessions until exactly at expiry time
+
+> Solution: Add grace period for system so sessions that are about to become invalid in the next minute are invalidated.
+
+
 **Ticket PERF-407: Performance Degradation**
 
 - **Reporter**: DevOps
