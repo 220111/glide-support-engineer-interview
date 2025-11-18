@@ -93,6 +93,38 @@ jest.mock('@/lib/db', () => ({
       });
     });
 
+    describe('getAccounts', () => {
+        it('should return a list of accounts for a user', async () => {
+            const caller = accountRouter.createCaller({
+                req: new Request('http://localhost'),
+                res: new Headers(),
+                user: { id: 1 },
+            });
+
+            (db.select().from().where as jest.Mock).mockResolvedValueOnce([{}, {}]);
+
+            const result = await caller.getAccounts();
+
+            expect(result).toBeDefined();
+            expect(result.length).toBe(2);
+        });
+
+        it('should return an empty list if the user has no accounts', async () => {
+            const caller = accountRouter.createCaller({
+                req: new Request('http://localhost'),
+                res: new Headers(),
+                user: { id: 1 },
+            });
+
+            (db.select().from().where as jest.Mock).mockResolvedValueOnce([]);
+
+            const result = await caller.getAccounts();
+
+            expect(result).toBeDefined();
+            expect(result.length).toBe(0);
+        });
+    });
+
     describe('fundAccount', () => {
         it('should successfully fund an account with a valid card', async () => {
             const caller = accountRouter.createCaller({
