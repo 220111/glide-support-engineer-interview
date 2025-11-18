@@ -9,6 +9,12 @@
 - **Description**: "I accidentally entered my birth date as 2025 and the system accepted it."
 - **Impact**: Potential compliance issues with accepting minors
 
+> Date of birth input seems to be doing no validation on either the frontend or the backend and is stored as a string
+
+> Solution: use backend validation to check that the date is 18 years ago and in the past and use frontend validation to do the same for the user.
+
+> In the future validation should properly check for accurate types including more complicated ones like dates.
+
 **Ticket VAL-206: Card Number Validation**
 
 - **Reporter**: David Brown

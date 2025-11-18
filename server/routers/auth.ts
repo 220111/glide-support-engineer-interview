@@ -17,7 +17,17 @@ export const authRouter = router({
         firstName: z.string().min(1),
         lastName: z.string().min(1),
         phoneNumber: z.string().regex(/^\+?\d{10,15}$/),
-        dateOfBirth: z.string(),
+        dateOfBirth: z.coerce
+          .date()
+          .max(new Date(), { message: "Date of birth must be in the past" })
+          .refine(
+            (date) => {
+              const today = new Date();
+              const eighteenYearsAgo = new Date(today.getFullYear() - 18, today.getMonth(), today.getDate());
+              return date <= eighteenYearsAgo;
+            },
+            { message: "You must be at least 18 years old to sign up" }
+          ),
         ssn: z.string().regex(/^\d{9}$/),
         address: z.string().min(1),
         city: z.string().min(1),
