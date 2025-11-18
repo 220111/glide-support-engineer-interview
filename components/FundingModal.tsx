@@ -51,8 +51,12 @@ export function FundingModal({ accountId, onClose, onSuccess }: FundingModalProp
       });
 
       onSuccess();
-    } catch (err: any) {
-      setError(err.message || "Failed to fund account");
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError("Something went wrong");
+      }
     }
   };
 
