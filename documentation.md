@@ -1,311 +1,198 @@
-# Issues
+# SecureBank Bug Fix and Remediation Report
 
-## Critical
+## Overview
 
-**Ticket VAL-202: Date of Birth Validation**
+This document details the investigation and resolution of several bugs reported in the SecureBank application. The focus was based on user impact, ticket priority, and ease of implementation. In addition to fixing the reported bugs, a comprehensive testing suite was added to verify the solutions and prevent regressions. Some general improvements have been made as well.
 
-- **Reporter**: Maria Garcia
-- **Priority**: Critical
-- **Description**: "I accidentally entered my birth date as 2025 and the system accepted it."
-- **Impact**: Potential compliance issues with accepting minors
+## General Improvements
 
-> Date of birth input seems to be doing no validation on either the frontend or the backend and is stored as a string
+ * Centralized Schemas: Created a lib/schemas.ts file to centralize Zod validation schemas. This improves maintainability and reusability.
+ * Database Modifications: Added an additional index on the transaction table to improve retrieval speeds and ordering.
+ * Unit & Integration Tests: Added comprehensive tests for the auth and account routers using Jest. These tests cover the bug fixes and new validation logic, ensuring that the fixes work as expected.
 
-> Solution: use backend validation to check that the date is 18 years ago and in the past and use frontend validation to do the same for the user.
 
-> In the future validation should properly check for accurate types including more complicated ones like dates.
-
-**Ticket VAL-206: Card Number Validation**
-
-- **Reporter**: David Brown
-- **Priority**: Critical
-- **Description**: "System accepts invalid card numbers"
-- **Impact**: Failed transactions and customer frustration
-
-> The backend system was doing no validation of credit card numbers to ensure they're correct.
-
-> Solution: Implement the Lunh algorithm to at least provide a simple check for invalid credit card numbers.
-
-> Ideally this would be backed by some sort of actual payment processing but this is still good validation to have for immediate failure cases.
-
-**Ticket VAL-208: Weak Password Requirements**
-
-- **Reporter**: Security Team
-- **Priority**: Critical
-- **Description**: "Password validation only checks length, not complexity"
-- **Impact**: Account security risks
-
-> Backend password validation only checked length and frontend only checked for length + 1 number + not in one of 3 common passwords.
-
-> Solution: Add more conditions onto passwords including: 1 number + 1 special charater + 1 uppercase letter. Additionally these requirements were added to the backend.
-
-**Ticket SEC-301: SSN Storage**
-
-- **Reporter**: Security Audit Team
-- **Priority**: Critical
-- **Description**: "SSNs are stored in plaintext in the database"
-- **Impact**: Severe privacy and compliance risk
-
-> SSN is very sensitive data that should not be stored in plaintext. I am sure that this is not enough of a solution in the real world but it should be better in the case that somebody stole information out of the db.
-
-> Solution: Add salt and encrypt/decrypt functionality and encrypt the SSN before storing it in the db.
-
-> If you only needed to check that somebody was using the same SSN (as a security measure) then a one way hash could be better.
-
-> NOTE: I put an encryption key in the code just for interview purposes. In the real world this would not be done and would use just the environment variable. 
-
-**Ticket SEC-303: XSS Vulnerability**
-
-- **Reporter**: Security Audit
-- **Priority**: Critical
-- **Description**: "Unescaped HTML rendering in transaction descriptions"
-- **Impact**: Potential for cross-site scripting attacks
-
-> TransactionList component was using a span with the dangerouslySetInnerHTML prop to render the description
-
-> Solution: Replace with an embeded JSX string
-
-> Since the description of the transaction is a plain string there is no need for Unescaped HTML rendering.
-
-**Ticket PERF-401: Account Creation Error**
-
-- **Reporter**: Support Team
-- **Priority**: Critical
-- **Description**: "New accounts show $100 balance when DB operations fail"
-- **Impact**: Incorrect balance displays
-
-> createAccount endpoint is returning a "pending" account object that defaults to a balance of $100
-
-> Solution: Pending account object has a default balance of $0
-
-> In the future more sensable defaults should be used and error cases should be checked.
-
-**Ticket PERF-405: Missing Transactions**
-
-- **Reporter**: Multiple Users
-- **Priority**: Critical
-- **Description**: "Not all transactions appear in history after multiple funding events"
-- **Impact**: Users cannot verify all their transactions
-
-> getTransactions endpoint has ineffecient db calls in a loop that was effectively replicating a left join and fundAccount was returning the incorrect transaction which was resolved with Ticket PERF-406
-
-> Solution: replace "enrichedTranscations" with a left join to move complexity into a single db call.
-
-> Databases are built to handle more complicated queries with default functionality this is especially true with joins which are would require a linear operation.
-
-**Ticket PERF-406: Balance Calculation**
-
-- **Reporter**: Finance Team
-- **Priority**: Critical
-- **Description**: "Account balances become incorrect after many transactions"
-- **Impact**: Critical financial discrepancies
-
-> fundAccount endpoint had a loop that was adding 1/100 of the transaction amount to the balance 100 times instead of just adding the values
-
-> Solution: Replace loop with simple add. Additionally, the number of db calls were reduced using Drizzle's .returning() function.
-
-> In the future it's important to remember that simple solutions can help reduce issues.
-
-**Ticket PERF-408: Resource Leak**
-
-- **Reporter**: System Monitoring
-- **Priority**: Critical
-- **Description**: "Database connections remain open"
-- **Impact**: System resource exhaustion
-
-> initDb function was creating new connections that it wasn't using and then never closing them
-
-> Solution: Remove unnecessary db connections and verify the ones that exist are closed properly
-
-> Db connections need to be closed when they're done being used. Drizzle should handle this with its connection but not others.
-
-## High
-
-**Ticket VAL-201: Email Validation Problems**
-
-- **Reporter**: James Wilson
-- **Priority**: High
-- **Description**: "The system accepts invalid email formats and doesn't handle special cases properly."
-- **Examples**:
-  - Accepts "TEST@example.com" but converts to lowercase without notifying user
-  - No validation for common typos like ".con" instead of ".com"
-
-> No email validation was being done at all on the frontend or backend.
-
-> Solution: Add email validation using zod to the frontend and backend.
-
-> Additionally I have refactored the frontend and backend validation using the react-hook-form zodResolver and a shared schema.
-
-**Ticket VAL-205: Zero Amount Funding**
-
-- **Reporter**: Lisa Johnson
-- **Priority**: High
-- **Description**: "I was able to submit a funding request for $0.00"
-- **Impact**: Creates unnecessary transaction records
-
-> FundingModal had amount input validation minimum set too low (0.0 vs 0.1). 
-These requests were rejected on the backend because the amount input was set to positive but this provided a not user friendly error message.
-
-> Solution: Set amount input minimum to 0.1 instead of 0.0
-
-> In the future it should be noted that min is inclusive.
-
-**Ticket VAL-207: Routing Number Optional**
-
-- **Reporter**: Support Team
-- **Priority**: High
-- **Description**: "Bank transfers are being submitted without routing numbers"
-- **Impact**: Failed ACH transfers
-
-> routingNumber is optional in fundAccount endpoint input and FundingFormData type.
-
-> Solution: make routingNumber not optional
-
-> In the future required fields should not be marked as optional
-
-> Update: This solution did not work correctly since routingNumber will be optional for credit cards.
-
-> Revised Solution: routingNumber is optional on the fundAccount input but should manually throw when the number is empty when a bank account type is submitted.
-
-> Self learning: always test all cases when making a solution and not just the optimal case.
-
-**Ticket VAL-210: Card Type Detection**
-
-- **Reporter**: Support Team
-- **Priority**: High
-- **Description**: "Card type validation only checks basic prefixes, missing many valid cards"
-- **Impact**: Valid cards being rejected
-
-> The basic prefix validation misses many valid credit cards and there is a better solution for immediate validation.
-
-> Solution implement the luhn algorithm for frontend validation.
-
-**Ticket SEC-302: Insecure Random Numbers**
-
-- **Reporter**: Security Team
-- **Priority**: High
-- **Description**: "Account numbers generated using Math.random()"
-- **Impact**: Potentially predictable account numbers
-
-> Math.random() is not cryptographically secure and should not be used for sensitive information.
-
-> Replace Math.random() with node:crypto randomInt()
-
-**Ticket SEC-304: Session Management**
-
-- **Reporter**: DevOps Team
-- **Priority**: High
-- **Description**: "Multiple valid sessions per user, no invalidation"
-- **Impact**: Security risk from unauthorized access
-
-> Sessions should be deleted from the db when new a new one is created.
-
-> Solution: delete a user's session from the db when a new one is created.
-
-> Since this is a banking app it is important that only the account owner is able to access their account which means only one session at a time.
-
-**Ticket PERF-403: Session Expiry**
-
-- **Reporter**: Security Team
-- **Priority**: High
-- **Description**: "Expiring sessions still considered valid until exact expiry time"
-- **Impact**: Security risk near session expiration
-
-> No system grace period so it will not invalidate sessions until exactly at expiry time
-
-> Solution: Add grace period for system so sessions that are about to become invalid in the next minute are invalidated.
-
-
-**Ticket PERF-407: Performance Degradation**
-
-- **Reporter**: DevOps
-- **Priority**: High
-- **Description**: "System slows down when processing multiple transactions"
-- **Impact**: Poor user experience during peak usage
-
-> Viewing transactions loads all transactions for the account each time. Additionally these are always filtered on the account number and ordered by the creation date.
-
-> Solution 1: Add a database index on account number and creation date to increase retreaval times.
-
-> Solution 2: Paginate the transactions using a useInfinteQuery hook with a "load more" button do reduce retreaval of older transactions.
-
-> It's important to ensure that we're not loading more data than needed and to ensure that the database is setup for how it's being used most frequently.
-
-## Medium
+## User Ticket Reported Findings
+(In order of completion)
 
 **Ticket UI-101: Dark Mode Text Visibility**
 
-- **Reporter**: Sarah Chen
-- **Priority**: Medium
-- **Description**: "When using dark mode, the text I type into forms appears white on a white background, making it impossible to see what I'm typing."
-- **Steps to Reproduce**:
-  1. Enable dark mode
-  2. Navigate to any input form
-  3. Start typing
-- **Expected**: Text should be clearly visible against the background
-- **Actual**: Text is white on white background
+ * **Root Cause**: Dark mode is "enabled" by changing foreground and background color variables in globals.css but these values are not being used anywhere.
 
-> Dark mode is "enabled" by changing foreground and background color variables in globals.css but these values are not being used anywhere.
+ * **Solution**: Remove unused dark mode variables. Which prevents the text color from changing to unpredictable values.
 
-> Solution: Remove unused dark mode variables. Which prevents the text color from changing to unpredictable values.
+ * **Preventative Measures**: This solution should prevent this problem moving forward.
 
-> Future prevention: This solution should prevent this problem moving forward.
 
-**Ticket VAL-203: State Code Validation**
+**Ticket VAL-207: Routing Number Optional**
 
-- **Reporter**: Alex Thompson
-- **Priority**: Medium
-- **Description**: "The system accepted 'XX' as a valid state code."
-- **Impact**: Address verification issues for banking communications
+ * **Root Cause**: `routingNumber` is optional in fundAccount endpoint input and FundingFormData type.
 
-> No validation on the state field
+ * **Solution**: Solution: make `routingNumber` not optional
 
-> Solution: Update validation to match an enum of all state codes
+ * **Preventive Measures**: In the future required fields should not be marked as optional.
 
-**Ticket VAL-204: Phone Number Format**
+ * **Update**: Update: This solution did not work correctly since `routingNumber` *will* be optional for credit cards.
 
-- **Reporter**: John Smith
-- **Priority**: Medium
-- **Description**: "International phone numbers aren't properly validated. The system accepts any string of numbers."
-- **Impact**: Unable to contact customers for important notifications
+ * **Revised Solution**: `routingNumber` is optional on the `fundAccount` input but should manually throw when the number is empty when a bank account type is submitted.
 
-> Only basic regex validation is being done on phone number
+ * **Self Learning**: always test all cases when making a solution and not just the optimal case.
 
-> Solution: Include libphonenumber-js to verify phone numbers are real US numbers.
+**Ticket VAL-205: Zero Amount Funding**
 
-> Extra information needed: This ticket seems like it might be asking to use an international phone number but it requires a US address. Desired functionality should be verified here before allowing international numbers. 
+ * **Root Cause**: `FundingModal` had amount input validation minimum set too low (0.0 vs 0.01). These requests were rejected on the backend because the amount input was set to positive but this provided a not user friendly error message.
 
-**Ticket VAL-209: Amount Input Issues**
+ * **Solution**: Set amount input minimum to 0.01 instead of 0.0.
 
-- **Reporter**: Robert Lee
-- **Priority**: Medium
-- **Description**: "System accepts amounts with multiple leading zeros"
-- **Impact**: Confusion in transaction records
+ * **Preventive Measures**: In the future it should be noted that min is inclusive.
 
-> Minor problem with amount field validation that allows for leading zeros. Gets parsed out for the backend but easy fix.
+**Ticket PERF-401: Account Creation Error**
 
-> Solution: Update amount input validation to not allow for leading zeros.
+ * **Root Cause**: `createAccount` endpoint is returning a `pending` account object that defaults to a balance of `100`. This could be misleading to new account holders who think they just got a free `100` only for it to disappear when the account is created.
 
-**Ticket PERF-402: Logout Issues**
+ * **Solution**: Pending account object now has a default balance of `0`.
 
-- **Reporter**: QA Team
-- **Priority**: Medium
-- **Description**: "Logout always reports success even when session remains active"
-- **Impact**: Users think they're logged out when they're not
+ * **Preventive Measures**: In the future more sensible defaults should be used and error cases should be checked.
 
-> Errors with signout logic can allow cases where users logout and it only removes their client token but it remains valid in the database.
+**Ticket SEC-303: XSS Vulnerability**
 
-> Solution: Rewrite signout logic to properly remove session each time.
+ * **Root Cause**: `TransactionList` component was using a span with the `dangerouslySetInnerHTML` prop to render the description. This can expose the site to XSS attacks.
+
+ * **Solution**: Replace the span with an embedded JSX string.
+
+ * **Preventive Measures**: Since the description of the transaction is a plain string there is no need for Unescaped HTML rendering.
+
+**Ticket PERF-406: Balance Calculation**
+
+ * **Root Cause**: `fundAccount` endpoint had a loop that was adding 1/100 of the transaction amount to the balance 100 times instead of just adding the values
+
+ * **Solution**: Replace loop with simple add. Additionally, the number of db calls were reduced using Drizzle's .`returning()` function.
+
+ * **Preventive Measures**: In the future it's important to remember that simple solutions can help reduce issues.
+
+**Ticket PERF-405: Missing Transactions**
+
+ * **Root Cause**: `getTransactions` endpoint has inefficient db calls in a loop that was effectively replicating a left join and fundAccount was returning the incorrect transaction which was resolved with `Ticket PERF-406`
+
+ * **Solution**: replace `enrichedTranscations` with a left join to move complexity into a single db call.
+
+ * **Preventive Measures**: Databases are built to handle more complicated queries with default functionality this is especially true with joins which are would require a linear operation.
+
+**Ticket PERF-408: Resource Leak**
+
+ * **Root Cause**: `initDb` function was creating new connections that it wasn't using and then never closing them.
+
+ * **Solution**: Remove unnecessary db connections and verify the ones that exist are closed properly.
+
+ * **Preventive Measures**: Db connections need to be closed when they're done being used. Drizzle should handle this with its connection but not others.
 
 **Ticket PERF-404: Transaction Sorting**
 
-- **Reporter**: Jane Doe
-- **Priority**: Medium
-- **Description**: "Transaction order seems random sometimes"
-- **Impact**: Confusion when reviewing transaction history
+ * **Root Cause**: Transactions were being returned without a set order.
 
-> Transactions were being returned without a set order
+ * **Solution**: Add an orderBy to the transaction query.
 
-> Solution: Add an orderBy to the transaction query
+ * **Preventative Measures**: Ordered data should include an orderBy statement.
 
-> Ordered data should include an orderBy statement
+**Ticket VAL-209: Amount Input Issues**
+
+ * **Root Cause**: Minor problem with amount field validation that allows for leading zeros. Gets parsed out for the backend but easy fix.
+
+ * **Solution**: Update amount input validation to not allow for leading zeros.
+
+**Ticket SEC-304: Session Management**
+
+ * **Root Cause**: Sessions should be deleted from the db when new a new one is created.
+
+ * **Solution**: delete a user's session from the db when a new one is created.
+
+ * **Preventative Measures**: Since this is a banking app it is important that only the account owner is able to access their account which means only one session at a time.
+
+**Ticket SEC-301: SSN Storage**
+
+ * **Root Cause**: SSN is very sensitive data that should not be stored in plaintext. I am sure that this is not enough of a solution in the real world but it should be better in the case that somebody stole information out of the db.
+
+ * **Solution**: Add salt and encrypt/decrypt functionality and encrypt the SSN before storing it in the db.
+
+ * **Preventive Measures**: If you only needed to check that somebody was using the same SSN (as a security measure) then a one way hash could be better.
+
+> **NOTE: I put an encryption key in the code just for interview purposes. In the real world this would not be done and would use just the environment variable.**
+
+**Ticket SEC-302: Insecure Random Numbers**
+
+ * **Root Cause**: Math.random() is not cryptographically secure and should not be used for sensitive information.
+
+ * **Solution**: Replace Math.random() with node:crypto randomInt()
+
+ * **Preventative Measures**: Sensitive information that should random and not be predictable should use random algorithms that are cryptographically secure.
+
+**Ticket PERF-403: Session Expiry**
+
+ * **Root Cause**: No system grace period so it will not invalidate sessions until exactly at expiry time
+
+ * **Solution**: Add grace period for system so sessions that are about to become invalid in the next minute are invalidated.
+
+**Ticket VAL-202: Date of Birth Validation**
+
+ * **Root Cause**: the `dateOfBirth` field seems to be doing only string validation on both the frontend and the backend. No logical validation to ensure minors were not using the platform.
+
+ * **Solution**: Use backend validation to check that the date is 18 years ago and in the past and use frontend validation to do the same for the user.
+
+ * **Preventive Measures**: In the future validation should properly check for accurate types including more complicated ones like dates.
+
+**Ticket VAL-210: Card Type Detection**
+
+ * **Root Cause**: The basic prefix validation for credit card numbers misses many valid credit cards and there is a better solution for immediate validation.
+
+ * **Solution**: Solution implement the luhn algorithm for frontend validation.
+
+**Ticket VAL-206: Card Number Validation**
+
+ * **Root Cause**: The backend system was doing no validation of credit card numbers to ensure they're correct.
+
+ * **Solution**: Implement the Lunh algorithm to a simple check for invalid credit card numbers.
+
+ * **Preventive Measures**: Ideally this would be backed by some sort of actual payment processing but this is still good validation to have for immediate failure cases.
+
+**Ticket VAL-208: Weak Password Requirements**
+
+ * **Root Cause**: Backend password validation only checked length and frontend only checked for length + 1 number + not in one of 3 common passwords.
+
+ * **Solution**: Add more conditions onto passwords including: 1 number + 1 special character + 1 uppercase letter. Additionally these requirements were added to the backend.
+
+**Ticket VAL-201: Email Validation Problems**
+
+ * **Root Cause**: No email validation was being done at all on the frontend or backend.
+
+ * **Solution**: Solution: Add email validation using zod to the frontend and backend.
+
+ * **Preventive Measures**: Additionally I have refactored the frontend and backend validation using the react-hook-form zodResolver and a shared schema.
+
+**Ticket PERF-407: Performance Degradation**
+
+ * **Root Cause**: Viewing transactions loads all transactions for the account each time. Additionally these are always filtered on the account number and ordered by the creation date.
+
+ * **Solution 1**: Add a database index on account number and creation date to increase retrieval times.
+
+ * **Solution 2**: Paginate the transactions using a useInfinteQuery hook with a "load more" button do reduce retreaval of older transactions.
+
+ * **Preventative Measures**: It's important to ensure that we're not loading more data than needed and to ensure that the database is setup for how it's being used most frequently.
+
+**Ticket VAL-203: State Code Validation**
+
+ * **Root Cause**: No validation on the `state` field on AccountCreation.
+
+ * **Solution**: Update validation to match an enum of all vaild US state codes.
+
+**Ticket VAL-204: Phone Number Format**
+
+ * **Root Cause**: Only basic regex validation is being done on phone number.
+
+ * **Solution**: Include libphonenumber-js to verify phone numbers are real US numbers.
+
+ * **Extra Information Needed**: This ticket seems like it might be asking to use an international phone number but it requires a US address. Desired functionality should be verified here before allowing international numbers. 
+
+**Ticket PERF-402: Logout Issues**
+
+ * **Root Cause**: Errors with logout logic can allow cases where users logout and it only removes their client token but the session remains valid in the database.
+
+ * **Solution**: Rewrite logout logic to properly remove session each time.
