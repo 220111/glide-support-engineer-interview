@@ -70,6 +70,12 @@
 - **Description**: "Account balances become incorrect after many transactions"
 - **Impact**: Critical financial discrepancies
 
+> fundAccount endpoint had a loop that was adding 1/100 of the transaction amount to the balance 100 times instead of just adding the values
+
+> Solution: Replace loop with simple add. Additionally, the number of db calls were reduced using Drizzle's .returning() function.
+
+> In the future it's important to remember that simple solutions can help reduce issues.
+
 **Ticket PERF-408: Resource Leak**
 
 - **Reporter**: System Monitoring
