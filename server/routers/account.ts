@@ -1,3 +1,4 @@
+import { luhnCheck } from "@/lib/validation";
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { protectedProcedure, router } from "../trpc";
@@ -79,11 +80,24 @@ export const accountRouter = router({
       z.object({
         accountId: z.number(),
         amount: z.number().positive(),
-        fundingSource: z.object({
-          type: z.enum(["card", "bank"]),
-          accountNumber: z.string(),
-          routingNumber: z.string().optional(),
-        }),
+        fundingSource: z
+          .object({
+            type: z.enum(["card", "bank"]),
+            accountNumber: z.string(),
+            routingNumber: z.string().optional(),
+          })
+          .refine(
+            (data) => {
+              if (data.type === "card") {
+                return luhnCheck(data.accountNumber);
+              }
+              return true;
+            },
+            {
+              message: "Invalid card number",
+              path: ["accountNumber"],
+            }
+          ),
       })
     )
     .mutation(async ({ input, ctx }) => {
@@ -110,7 +124,7 @@ export const accountRouter = router({
         });
       }
 
-      if (input.fundingSource.type === "bank" && !input.fundingSource.routingNumber){
+      if (input.fundingSource.type === "bank" && !input.fundingSource.routingNumber) {
         throw new TRPCError({
           code: "BAD_REQUEST",
           message: "Routing number is required for bank funding",
@@ -118,14 +132,17 @@ export const accountRouter = router({
       }
 
       // Create transaction
-      const [transaction] = await db.insert(transactions).values({
-        accountId: input.accountId,
-        type: "deposit",
-        amount,
-        description: `Funding from ${input.fundingSource.type}`,
-        status: "completed",
-        processedAt: new Date().toISOString(),
-      }).returning();
+      const [transaction] = await db
+        .insert(transactions)
+        .values({
+          accountId: input.accountId,
+          type: "deposit",
+          amount,
+          description: `Funding from ${input.fundingSource.type}`,
+          status: "completed",
+          processedAt: new Date().toISOString(),
+        })
+        .returning();
 
       // Update account balance
       const newBalance = account.balance + amount;

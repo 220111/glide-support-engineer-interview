@@ -22,6 +22,12 @@
 - **Description**: "System accepts invalid card numbers"
 - **Impact**: Failed transactions and customer frustration
 
+> The backend system was doing no validation of credit card numbers to ensure they're correct.
+
+> Solution: Implement the Lunh algorithm to at least provide a simple check for invalid credit card numbers.
+
+> Ideally this would be backed by some sort of actual payment processing but this is still good validation to have for immediate failure cases.
+
 **Ticket VAL-208: Weak Password Requirements**
 
 - **Reporter**: Security Team
@@ -159,6 +165,10 @@ These requests were rejected on the backend because the amount input was set to 
 - **Priority**: High
 - **Description**: "Card type validation only checks basic prefixes, missing many valid cards"
 - **Impact**: Valid cards being rejected
+
+> The basic prefix validation misses many valid credit cards and there is a better solution for immediate validation.
+
+> Solution implement the luhn algorithm for frontend validation.
 
 **Ticket SEC-302: Insecure Random Numbers**
 
