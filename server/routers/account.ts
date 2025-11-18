@@ -4,7 +4,7 @@ import { TRPCError } from "@trpc/server";
 import { protectedProcedure, router } from "../trpc";
 import { db } from "@/lib/db";
 import { accounts, transactions } from "@/lib/db/schema";
-import { eq, and, desc } from "drizzle-orm";
+import { eq, and, desc, sql } from "drizzle-orm";
 import crypto from "crypto";
 
 function generateAccountNumber(): string {
@@ -145,17 +145,19 @@ export const accountRouter = router({
         .returning();
 
       // Update account balance
-      const newBalance = account.balance + amount;
-      await db
+      const [newBalance] = await db
         .update(accounts)
         .set({
-          balance: newBalance,
+          balance: sql`${accounts.balance} + ${amount}`,
         })
-        .where(eq(accounts.id, input.accountId));
+        .where(eq(accounts.id, input.accountId))
+        .returning({
+          newBalance: accounts.balance,
+        });
 
       return {
         transaction,
-        newBalance,
+        newBalance: newBalance,
       };
     }),
 
