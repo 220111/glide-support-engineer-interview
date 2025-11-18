@@ -40,7 +40,7 @@ export const accountRouter = router({
       // Generate unique account number
       while (!isUnique) {
         accountNumber = generateAccountNumber();
-        console.log(accountNumber);
+        
         const existing = await db.select().from(accounts).where(eq(accounts.accountNumber, accountNumber)).get();
         isUnique = !existing;
       }
