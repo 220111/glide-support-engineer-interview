@@ -160,6 +160,12 @@ These requests were rejected on the backend because the amount input was set to 
 - **Description**: "Multiple valid sessions per user, no invalidation"
 - **Impact**: Security risk from unauthorized access
 
+> Sessions should be deleted from the db when new a new one is created.
+
+> Solution: delete a user's session from the db when a new one is created.
+
+> Since this is a banking app it is important that only the account owner is able to access their account which means only one session at a time.
+
 **Ticket PERF-403: Session Expiry**
 
 - **Reporter**: Security Team

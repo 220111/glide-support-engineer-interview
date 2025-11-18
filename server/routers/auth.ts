@@ -101,6 +101,12 @@ export const authRouter = router({
         });
       }
 
+      // Delete old sessions
+
+      await db.delete(sessions).where(eq(sessions.userId, user.id));
+
+      // Create session
+
       const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET || "temporary-secret-for-interview", {
         expiresIn: "7d",
       });
