@@ -81,7 +81,7 @@ export const accountRouter = router({
         fundingSource: z.object({
           type: z.enum(["card", "bank"]),
           accountNumber: z.string(),
-          routingNumber: z.string(),
+          routingNumber: z.string().optional(),
         }),
       })
     )
@@ -106,6 +106,13 @@ export const accountRouter = router({
         throw new TRPCError({
           code: "BAD_REQUEST",
           message: "Account is not active",
+        });
+      }
+
+      if (input.fundingSource.type === "bank" && !input.fundingSource.routingNumber){
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Routing number is required for bank funding",
         });
       }
 

@@ -127,11 +127,17 @@ These requests were rejected on the backend because the amount input was set to 
 - **Description**: "Bank transfers are being submitted without routing numbers"
 - **Impact**: Failed ACH transfers
 
-> routingNumber is optional in fundAccount endpoint input and FundingFormData type
+> routingNumber is optional in fundAccount endpoint input and FundingFormData type.
 
 > Solution: make routingNumber not optional
 
 > In the future required fields should not be marked as optional
+
+> Update: This solution did not work correctly since routingNumber will be optional for credit cards.
+
+> Revised Solution: routingNumber is optional on the fundAccount input but should manually throw when the number is empty when a bank account type is submitted.
+
+> Self learning: always test all cases when making a solution and not just the optimal case.
 
 **Ticket VAL-210: Card Type Detection**
 
