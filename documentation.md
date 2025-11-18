@@ -44,6 +44,12 @@
 - **Description**: "New accounts show $100 balance when DB operations fail"
 - **Impact**: Incorrect balance displays
 
+> createAccount endpoint is returning a "pending" account object that defaults to a balance of $100
+
+> Solution: Pending account object has a default balance of $0
+
+> In the future more sensable defaults should be used and error cases should be checked.
+
 **Ticket PERF-405: Missing Transactions**
 
 - **Reporter**: Multiple Users

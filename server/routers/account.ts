@@ -60,7 +60,7 @@ export const accountRouter = router({
           userId: ctx.user.id,
           accountNumber: accountNumber!,
           accountType: input.accountType,
-          balance: 100,
+          balance: 0,
           status: "pending",
           createdAt: new Date().toISOString(),
         }
