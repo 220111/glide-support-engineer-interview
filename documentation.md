@@ -293,6 +293,10 @@ These requests were rejected on the backend because the amount input was set to 
 - **Description**: "Logout always reports success even when session remains active"
 - **Impact**: Users think they're logged out when they're not
 
+> Errors with signout logic can allow cases where users logout and it only removes their client token but it remains valid in the database.
+
+> Solution: Rewrite signout logic to properly remove session each time.
+
 **Ticket PERF-404: Transaction Sorting**
 
 - **Reporter**: Jane Doe

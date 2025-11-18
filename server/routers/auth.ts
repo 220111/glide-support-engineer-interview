@@ -1,5 +1,4 @@
 import { encrypt } from "@/lib/crypto";
-import { z } from "zod";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { TRPCError } from "@trpc/server";
@@ -115,21 +114,14 @@ export const authRouter = router({
     }),
 
   logout: publicProcedure.mutation(async ({ ctx }) => {
-    if (ctx.user) {
-      // Delete session from database
-      let token: string | undefined;
-      if ("cookies" in ctx.req) {
-        token = (ctx.req as any).cookies.session;
-      } else {
-        const cookieHeader = ctx.req.headers.get?.("cookie") || (ctx.req.headers as any).cookie;
-        token = cookieHeader
-          ?.split("; ")
-          .find((c: string) => c.startsWith("session="))
-          ?.split("=")[1];
-      }
-      if (token) {
-        await db.delete(sessions).where(eq(sessions.token, token));
-      }
+    // Delete session from database
+    const cookieHeader = ctx.req.headers.get?.("cookie") || (ctx.req.headers as any).cookie || "";
+    const token = cookieHeader
+      .split("; ")
+      .find((c: string) => c.startsWith("session="))
+      ?.split("=")[1];
+    if (token) {
+      await db.delete(sessions).where(eq(sessions.token, token));
     }
 
     if ("setHeader" in ctx.res) {
@@ -138,6 +130,6 @@ export const authRouter = router({
       (ctx.res as Headers).set("Set-Cookie", `session=; Path=/; HttpOnly; SameSite=Strict; Max-Age=0`);
     }
 
-    return { success: true, message: ctx.user ? "Logged out successfully" : "No active session" };
+    return { success: true, message: "Logged out successfully" };
   }),
 });
